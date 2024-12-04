@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String                @id // Telegram user ID
+  username      String?               @unique @db.VarChar(255)
+  firstName     String?               @db.VarChar(255)
+  lastName      String?               @db.VarChar(255)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  notifyTime    String                @default("09:00") @db.VarChar(5)
+  notifications NotificationSetting[]
+  savedItems    SavedOpportunity[]
+}
+
+model NotificationSetting {
+  id        Int             @id @default(autoincrement())
+  userId    String
+  type      OpportunityType
+  enabled   Boolean         @default(true)
+  minReward Decimal?        @db.Decimal(10, 2)
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type])
+  @@index([userId])
+}
+
+model Opportunity {
+  id           String             @id @default(uuid())
+  type         OpportunityType
+  title        String             @db.VarChar(255)
+  description  String?            @db.Text
+  url          String             @unique @db.VarChar(512)
+  platform     String             @db.VarChar(100)
+  reward       Decimal?           @db.Decimal(10, 2)
+  rewardToken  String?            @db.VarChar(20)
+  startDate    DateTime?
+  endDate      DateTime?
+  status       Status             @default(ACTIVE)
+  lastChecked  DateTime           @default(now())
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  savedBy      SavedOpportunity[]
+  tagRelations OpportunityTag[]
+}
+
+model Tag {
+  id            Int              @id @default(autoincrement())
+  name          String           @unique @db.VarChar(100)
+  createdAt     DateTime         @default(now())
+  opportunities OpportunityTag[]
+
+  @@index([name])
+}
+
+// Tabla intermedia para la relación many-to-many entre Opportunity y Tag
+model OpportunityTag {
+  id            Int         @id @default(autoincrement())
+  opportunityId String
+  tagId         Int
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  tag           Tag         @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+
+  @@unique([opportunityId, tagId])
+  @@index([opportunityId])
+  @@index([tagId])
+}
+
+model SavedOpportunity {
+  id            Int         @id @default(autoincrement())
+  userId        String
+  opportunityId String
+  status        SavedStatus @default(INTERESTED)
+  priority      Priority    @default(MEDIUM)
+  notes         String?     @db.Text
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
+  @@index([userId])
+  @@index([opportunityId])
+}
+
+enum OpportunityType {
+  BOUNTY
+  AUDIT
+  HACKATHON
+  AIRDROP
+  WHITELIST
+  GRANT
+}
+
+enum Status {
+  ACTIVE
+  EXPIRED
+  COMPLETED
+}
+
+enum SavedStatus {
+  INTERESTED
+  APPLIED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}

@@ -1,0 +1,34 @@
+# Dependencies
+/node_modules
+yarn.lock
+package-lock.json
+
+# Environment
+.env
+.env.*
+
+# IDEs and editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Temporary files
+/tmp
+*.xlsx
+*.xls
+*.csv
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Prisma
+/prisma/*.db
+/prisma/migrations/
+
+# System Files
+.DS_Store
+Thumbs.db
